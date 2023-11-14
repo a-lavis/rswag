@@ -78,7 +78,21 @@ module Rswag
           @config.swagger_strict_schema_validation
         )
 
-        { strict: is_strict }
+        all_properties_required = !!metadata.fetch(
+          :openapi_all_properties_required,
+          @config.openapi_all_properties_required
+        )
+
+        no_additional_properties = !!metadata.fetch(
+          :openapi_no_additional_properties,
+          @config.openapi_no_additional_properties
+        )
+
+        {
+          strict: is_strict,
+          allPropertiesRequired: all_properties_required,
+          noAdditionalProperties: no_additional_properties
+        }
       end
 
       def definitions_or_component_schemas(swagger_doc, version)

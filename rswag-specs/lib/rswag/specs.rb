@@ -15,6 +15,8 @@ module Rswag
       c.add_setting :swagger_dry_run
       c.add_setting :swagger_format
       c.add_setting :swagger_strict_schema_validation
+      c.add_setting :openapi_all_properties_required
+      c.add_setting :openapi_no_additional_properties
       c.extend ExampleGroupHelpers, type: :request
       c.include ExampleHelpers, type: :request
     end

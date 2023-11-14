@@ -65,6 +65,14 @@ module Rswag
         ActiveSupport::Deprecation.warn('Rswag::Specs: WARNING: The method will be renamed to "openapi_strict_schema_validation" in v3.0')
         @swagger_strict_schema_validation ||= (@rspec_config.swagger_strict_schema_validation || false)
       end
+
+      def openapi_all_properties_required
+        @openapi_all_properties_required ||= (@rspec_config.openapi_all_properties_required || false)
+      end
+
+      def openapi_no_additional_properties
+        @openapi_no_additional_properties ||= (@rspec_config.openapi_no_additional_properties || false)
+      end
     end
 
     class ConfigurationError < StandardError; end

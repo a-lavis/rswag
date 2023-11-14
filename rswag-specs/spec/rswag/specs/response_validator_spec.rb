@@ -11,12 +11,27 @@ module Rswag
         allow(config).to receive(:get_swagger_doc).and_return(swagger_doc)
         allow(config).to receive(:get_swagger_doc_version).and_return('2.0')
         allow(config).to receive(:swagger_strict_schema_validation).and_return(swagger_strict_schema_validation)
+        allow(config).to receive(:openapi_all_properties_required).and_return(openapi_all_properties_required)
+        allow(config).to receive(:openapi_no_additional_properties).and_return(openapi_no_additional_properties)
       end
 
       let(:config) { double('config') }
       let(:swagger_doc) { {} }
       let(:example) { double('example') }
       let(:swagger_strict_schema_validation) { false }
+      let(:openapi_all_properties_required) { false }
+      let(:openapi_no_additional_properties) { false }
+      let(:required_properties) { ['text', 'number'] }
+      let(:response_schema) do
+        {
+          type: :object,
+          properties: {
+            text: { type: :string },
+            number: { type: :integer }
+          },
+          required: required_properties
+        }
+      end
       let(:metadata) do
         {
           response: {
@@ -36,14 +51,7 @@ module Rswag
                 }
               }
             },
-            schema: {
-              type: :object,
-              properties: {
-                text: { type: :string },
-                number: { type: :integer }
-              },
-              required: ['text', 'number']
-            }
+            schema: response_schema
           }
         }
       end
@@ -53,7 +61,7 @@ module Rswag
         let(:response) do
           OpenStruct.new(
             code: '200',
-            headers: { 
+            headers: {
               'X-Rate-Limit-Limit' => '10',
               'X-Cursor' => 'test_cursor',
               'X-Per-Page' => 25
@@ -77,8 +85,8 @@ module Rswag
         end
 
         context 'response headers do not include optional header' do
-          before { 
-            response.headers = { 
+          before {
+            response.headers = {
               'X-Rate-Limit-Limit' => '10',
               'X-Per-Page' => 25
             }
@@ -87,8 +95,8 @@ module Rswag
         end
 
         context 'response headers include nullable header' do
-          before { 
-            response.headers = { 
+          before {
+            response.headers = {
               'X-Rate-Limit-Limit' => '10',
               'X-Cursor' => 'test_cursor',
               'X-Per-Page' => nil
@@ -98,8 +106,8 @@ module Rswag
         end
 
         context 'response headers missing nullable header' do
-          before { 
-            response.headers = { 
+          before {
+            response.headers = {
               'X-Rate-Limit-Limit' => '10',
               'X-Cursor' => 'test_cursor'
             }
@@ -137,6 +145,61 @@ module Rswag
           context "with strict schema validation enabled in config but disabled in metadata" do
             let(:swagger_strict_schema_validation) { true }
             let(:metadata) { super().merge(swagger_strict_schema_validation: false) }
+
+            it { expect { call }.not_to raise_error }
+          end
+
+          context "with all_properties_required enabled" do
+            let(:openapi_all_properties_required) { true }
+
+            it { expect { call }.not_to raise_error }
+          end
+
+          context "with no_additional_properties enabled" do
+            let(:openapi_no_additional_properties) { true }
+
+            it { expect { call }.to raise_error /Expected response body/ }
+          end
+        end
+
+        context "when response body is missing non-required properties" do
+          let(:required_properties) { ['text'] }
+          before { response.body = '{"text":"bar"}' }
+
+          context "with strict schema validation enabled" do
+            let(:swagger_strict_schema_validation) { true }
+
+            it { expect { call }.to raise_error /Expected response body/ }
+          end
+
+          context "with strict schema validation disabled" do
+            let(:swagger_strict_schema_validation) { false }
+
+            it { expect { call }.not_to raise_error }
+          end
+
+          context "with strict schema validation disabled in config but enabled in metadata" do
+            let(:swagger_strict_schema_validation) { false }
+            let(:metadata) { super().merge(swagger_strict_schema_validation: true) }
+
+            it { expect { call }.to raise_error /Expected response body/ }
+          end
+
+          context "with strict schema validation enabled in config but disabled in metadata" do
+            let(:swagger_strict_schema_validation) { true }
+            let(:metadata) { super().merge(swagger_strict_schema_validation: false) }
+
+            it { expect { call }.not_to raise_error }
+          end
+
+          context "with all_properties_required enabled" do
+            let(:openapi_all_properties_required) { true }
+
+            it { expect { call }.to raise_error /Expected response body/ }
+          end
+
+          context "with no_additional_properties enabled" do
+            let(:openapi_no_additional_properties) { true }
 
             it { expect { call }.not_to raise_error }
           end
@@ -185,7 +248,7 @@ module Rswag
                 let(:response) do
                   OpenStruct.new(
                     code: '200',
-                    headers: { 
+                    headers: {
                       'X-Rate-Limit-Limit' => '10',
                       'X-Cursor' => 'test_cursor',
                       'X-Per-Page' => 25
@@ -226,7 +289,7 @@ module Rswag
                 let(:response) do
                   OpenStruct.new(
                     code: '200',
-                    headers: { 
+                    headers: {
                       'X-Rate-Limit-Limit' => '10',
                       'X-Cursor' => 'test_cursor',
                       'X-Per-Page' => 25
